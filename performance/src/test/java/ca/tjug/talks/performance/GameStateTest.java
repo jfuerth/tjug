@@ -41,13 +41,8 @@ import org.junit.Test;
 public class GameStateTest {
 
     @Test
-    public void testRowForHole() throws Exception {
-        int[] expected = new int[] { -1, 1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5 };
-        GameState gs = new GameState(5, new Coordinate(1, 1));
-        for (int i = 0; i < expected.length; i++) {
-            if (expected[i] == -1) continue;
-            assertEquals(expected[i], gs.rowForHole(i));
-        }
-    }
-    
+    public void testConstructor() throws Exception {
+        GameState gs = new GameState(3, new Coordinate(2, 2));
+        assertEquals(5, gs.pegsRemaining());
+    }    
 }
