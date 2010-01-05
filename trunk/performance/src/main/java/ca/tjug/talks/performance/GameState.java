@@ -138,20 +138,6 @@ public class GameState {
     public int pegsRemaining() {
         return occupiedHoles.size();
     }
-    
-    int rowForHole(int hole) {
-        // in:  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-        // out: 1  2  2  3  3  3  4  4  4  4  5  5  5  5  5
-        
-        int current = 1;
-        for (int row = 1; row <= rowCount; row++) {
-            for (int i = 0; i < row; i++) {
-                if (current == hole) return row;
-                current++;
-            }
-        }
-        throw new IllegalArgumentException("Hole number out of range: " + hole);
-    }
 
     /**
      * Returns the full board state in a multiline string arranged to resemble a
