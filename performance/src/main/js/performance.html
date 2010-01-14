@@ -1,0 +1,13 @@
+<html>
+<body>
+<script type="text/javascript" src="move.js"></script>
+<script type="text/javascript" src="coordinate.js"></script>
+<script type="text/javascript">
+var c = new Coordinate(5,1);
+document.write("c.row = " + c.getRow());
+document.write("<br>c.hole = " + c.getHole());
+document.write("<br>c = " + c);
+document.write("<br>moves = " + c.possibleMoves(5));
+</script>
+</body>
+</html>
