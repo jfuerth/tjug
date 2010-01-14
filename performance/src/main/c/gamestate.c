@@ -3,9 +3,121 @@
  *  
  *
  *  Created by Jonathan Fuerth on 2010-01-04.
- *  Copyright 2010 __MyCompanyName__. All rights reserved.
- *
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include "alist.h"
 #include "gamestate.h"
+#include "coordinate.h"
+
+gamestate_t *gamestate_new(int rows, coord_t *empty_hole) {
+	gamestate_t *gs = malloc(sizeof(gamestate_t));
+	if (gs == NULL) {
+		perror("Couldn't allocate game state");
+		exit(1);
+	}
+	
+	gs->rowcount = rows;
+	gs->occupied_holes = alist_new();
+	
+	for (int row = 1; row <= rows; row++) {
+		for (int hole = 1; hole <= row; hole++) {
+			coord_t *peg = coord_new(row, hole);
+			if (coord_cmp(peg, empty_hole) != 0) {
+				alist_add(gs->occupied_holes, peg);
+			}
+		}
+	}
+	
+	return gs;
+}
+
+void gamestate_free(gamestate_t *gs) {
+	alist_free(gs->occupied_holes);
+	free(gs);
+}
+
+gamestate_t *gamestate_apply_move(gamestate_t *gs, move_t *move) {
+	gamestate_t *newgs = malloc(sizeof(gamestate_t));
+	if (gs == NULL) {
+		perror("Couldn't allocate game state");
+		exit(1);
+	}
+	
+	newgs->rowcount = gs->rowcount;
+	newgs->occupied_holes = alist_new_copy(gs->occupied_holes);
+	
+//	printf("Copied game state:\n");
+//	gamestate_print(newgs);
+
+	
+	if (!alist_remove(newgs->occupied_holes, move->from, coord_cmp)) {
+		printf("Move is not consistent with game state: 'from' hole was unoccupied.\n");
+		exit(1);
+	}
+//	printf("index of jumped hole in list: %d\n",
+//		   alist_index_of(newgs->occupied_holes, move->jumped, coord_cmp));
+	if (!alist_remove(newgs->occupied_holes, move->jumped, coord_cmp)) {
+		printf("Move is not consistent with game state: jumped hole was unoccupied.\n");
+		printf("Old game state:\n");
+		gamestate_print(gs);
+		printf("Attempted move: ");
+		move_print(move);
+		printf("New game state ('from' hole should now be empty):\n");
+		gamestate_print(newgs);
+		exit(1);
+	}
+	if (alist_contains(newgs->occupied_holes, move->to, coord_cmp)) {
+		printf("Move is not consistent with game state: 'to' hole was occupied.\n");
+		exit(1);
+	}
+	if (move->to->row > newgs->rowcount || move->to->row < 1) {
+		printf("Move is not legal because the 'to' hole does not exist: row %d, hole %d\n",
+			   move->to->row, move->to->hole);
+	}
+	alist_add(newgs->occupied_holes, move->to);
+	
+	return newgs;
+}
+
+alist_t *gamestate_legal_moves(gamestate_t *gs) {
+	alist_t *legalMoves = alist_new();
+	for (int i = 0; i < gs->occupied_holes->size; i++) {
+		coord_t *c = alist_get(gs->occupied_holes, i);
+		
+		alist_t *possibleMoves = coord_possible_moves(c, gs->rowcount);
+		for (int j = 0; j < possibleMoves->size; j++) {
+			move_t *m = alist_get(possibleMoves, j);
+			if (alist_contains(gs->occupied_holes, m->jumped, coord_cmp) && !alist_contains(gs->occupied_holes, m->to, coord_cmp)) {
+				alist_add(legalMoves, m);
+			}
+		}
+	}
+	return legalMoves;
+}
+
+int gamestate_pegs_remaining(gamestate_t *gs) {
+	return gs->occupied_holes->size;
+}
+
+void gamestate_print(gamestate_t *gs) {
+	printf("Game with %d pegs:\n", gamestate_pegs_remaining(gs));
+	for (int row = 1; row <= gs->rowcount; row++) {
+		int indent = gs->rowcount - row;
+		for (int i = 0; i < indent; i++) {
+			printf(" ");
+		}
+		for (int hole = 1; hole <= row; hole++) {
+			coord_t *this_coord = coord_new(row, hole);
+			if (alist_contains(gs->occupied_holes, this_coord, coord_cmp)) {
+				printf(" *");
+			} else {
+				printf(" O");
+			}
+			coord_free(this_coord);
+		}
+		printf("\n");
+	}
+}
 
