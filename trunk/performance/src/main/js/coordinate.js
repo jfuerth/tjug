@@ -73,4 +73,23 @@ function Coordinate(row, hole) {
 	this.toString = function() {
         return "r" + row + "h" + hole;
 	}
+	
+	this.equals = function(obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (this.prototype != obj.prototype)
+            return false;
+        
+        if (obj.getHole == undefined) {
+        	throw new Error("The given object doesn't look like a coordinate");
+        }
+        
+        if (hole != obj.getHole())
+            return false;
+        if (row != obj.getRow())
+            return false;
+        return true;
+	}
 };
