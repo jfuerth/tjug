@@ -6,6 +6,8 @@ class Move
 		@from = from
 		@jumped = jumped
 		@to = to
+		
+		freeze
 	end
 	
 	def to_s
@@ -22,6 +24,8 @@ class Coordinate
         raise "Illegal hole number: #{hole} on row #{row}" if (hole > row)
 		@row = row
 		@hole = hole
+		
+		freeze
 	end
 	
     def possibleMoves(rowCount)
@@ -100,101 +104,115 @@ end
 
 class GameState
 
-	def initialize(rows, emptyHole)
-        @rowCount = rows
-        @occupiedHoles = []
-        for row in 1..rows
-            for hole in 1..row
-                def peg = Coordinate.new(row, hole)
-                if !(peg == emptyHole)
-                    occupiedHoles.push peg
+	attr_reader :rowCount
+
+	def initialize(rows, emptyHole, initialState=nil, applyMe=nil)
+	
+		if initialState && applyMe
+			# top-secret "apply move" initializer
+			@rowCount = initialState.rowCount
+			@occupiedHoles = initialState.occupiedHoles.dup
+			if !occupiedHoles.delete applyMe.from
+				raise "Move is not consistent with game state: 'from' hole was unoccupied."
+			end
+			
+			if !occupiedHoles.delete applyMe.jumped
+				raise "Move is not consistent with game state: jumped hole was unoccupied."
+			end
+			
+			if occupiedHoles.member? applyMe.to
+				raise "Move is not consistent with game state: 'to' hole was occupied."
+			end
+        
+			if (applyMe.to.row > @rowCount || applyMe.to.row < 1)
+				raise "Move is not legal because the 'to' hole does not exist: #{applyMe.to}"
+			end
+			
+			occupiedHoles.push applyMe.to
+
+		else
+			# standard public initializer: fill board except for one hole
+			@rowCount = rows
+			@occupiedHoles = []
+			for row in 1..rows
+				for hole in 1..row
+					peg = Coordinate.new(row, hole)
+					if !(peg == emptyHole)
+						@occupiedHoles.push peg
+					end
+				end
+			end
+		end
+		
+		occupiedHoles.freeze
+		freeze
+    end
+    
+    def legalMoves()
+        legalMoves = []
+        for c in @occupiedHoles
+            possibleMoves = c.possibleMoves(@rowCount)
+            
+			for m in possibleMoves
+                if @occupiedHoles.contains(m.jumped) && !@occupiedHoles.contains(m.to)
+                    legalMoves.push m
                 end
             end
         end
+        return legalMoves;
+    end
+    
+    def apply(move)
+        return GameState.new(nil, nil, self, move)
     end
 
-    private GameState(GameState initialState, Move applyMe) {
-        rowCount = initialState.rowCount;
-        occupiedHoles = new ArrayList<Coordinate>(initialState.occupiedHoles);
-        if (!occupiedHoles.remove(applyMe.getFrom())) {
-            throw new IllegalArgumentException(
-                    "Move is not consistent with game state: 'from' hole was unoccupied.");
-        }
-        if (!occupiedHoles.remove(applyMe.getJumped())) {
-            throw new IllegalArgumentException(
-                    "Move is not consistent with game state: jumped hole was unoccupied.");
-        }
-        if (occupiedHoles.contains(applyMe.getTo())) {
-            throw new IllegalArgumentException(
-                    "Move is not consistent with game state: 'to' hole was occupied.");
-        }
-        if (applyMe.getTo().getRow() > rowCount || applyMe.getTo().getRow() < 1) {
-            throw new IllegalArgumentException(
-                    "Move is not legal because the 'to' hole does not exist: " + applyMe.getTo());
-        }
-        occupiedHoles.add(applyMe.getTo());
-    }
-    
-    public List<Move> legalMoves() {
-        List<Move> legalMoves = new ArrayList<Move>();
-        for (Coordinate c : occupiedHoles) {
-            Collection<Move> possibleMoves = c.possibleMoves(rowCount);
-            Iterator<Move> it = possibleMoves.iterator();
-            while (it.hasNext()) {
-                Move m = it.next();
-                if (occupiedHoles.contains(m.getJumped()) && !occupiedHoles.contains(m.getTo())) {
-                    legalMoves.add(m);
-                }
-            }
-        }
-        return legalMoves;
-    }
-    
-    public GameState apply(Move move) {
-        return new GameState(this, move);
-    }
+    def pegsRemaining()
+        return @occupiedHoles.length
+	end
 
-    public int pegsRemaining() {
-        return occupiedHoles.size();
-    }
-
-    /**
-     * Returns the full board state in a multiline string arranged to resemble a
-     * real board. '*' characters signify occupied holes, and 'O' characters
-     * signify empty ones.
-     */
-    @Override
-    public String toString() {
-        final String nl = System.getProperty("line.separator");
-        StringBuilder sb = new StringBuilder();
-        sb.append("Game with " + pegsRemaining() + " pegs:" + nl);
-        for (int row = 1; row <= rowCount; row++) {
-            int indent = rowCount - row;
-            for (int i = 0; i < indent; i++) {
-                sb.append(" ");
-            }
-            for (int hole = 1; hole <= row; hole++) {
-                if (occupiedHoles.contains(new Coordinate(row, hole))) {
-                    sb.append(" *");
-                } else {
-                    sb.append(" O");
-                }
-            }
-            sb.append(nl);
-        }
-        return sb.toString();
-    }
+	def to_s()
+        sb = ""
+        sb.concat("Game with #{pegsRemaining} pegs:\n")
+        for row in 1..@rowCount
+            indent = @rowCount - row
+            for i in 0...indent
+                sb.concat(" ")
+            end
+            for hole in 1..row
+                if (@occupiedHoles.member? Coordinate.new(row, hole))
+                    sb.concat(" *")
+                else
+                    sb.concat(" O")
+                end
+            end
+            sb.concat("\n")
+        end
+        return sb
+    end
+	
+	protected
+	
+	# the top-secret copy constructor needs access to the original game state's
+	# list of occupied holes
+	def occupiedHoles
+		@occupiedHoles
+	end
 end
 
-c1 = Coordinate.new(2,1)
-c2 = Coordinate.new(2,1)
+c1 = Coordinate.new(4,1)
+c2 = Coordinate.new(3,1)
+c3 = Coordinate.new(2,1)
 
-print "c1: #{c1}\n"
-print "c1 moves: #{c1.possibleMoves(5)}\n"
-print "c2: #{c2}\n"
+gs = GameState.new(5, Coordinate.new(2,1))
+puts
+puts gs
 
-print "c2 == c1: #{c2 == c1}\n"
-print "c2.eql?(c1): #{c2.eql?(c1)}\n"
+m = Move.new(c1, c2, c3)
+gs2 = gs.apply(m)
+puts
+puts gs2
 
-a = [c1, c2]
-print a
+puts "original:"
+puts gs
+
+puts gs.occupiedHoles
