@@ -2,7 +2,7 @@
 
 class Move
 	def initialize(from, jumped, to)
-		print("Creating new move #{from} -> #{jumped} -> #{to}\n")
+		#print("Creating new move #{from} -> #{jumped} -> #{to}\n")
 		@from = from
 		@jumped = jumped
 		@to = to
@@ -154,7 +154,7 @@ class GameState
             possibleMoves = c.possibleMoves(@rowCount)
             
 			for m in possibleMoves
-                if @occupiedHoles.contains(m.jumped) && !@occupiedHoles.contains(m.to)
+                if @occupiedHoles.member?(m.jumped) && !@occupiedHoles.member?(m.to)
                     legalMoves.push m
                 end
             end
@@ -199,20 +199,41 @@ class GameState
 	end
 end
 
-c1 = Coordinate.new(4,1)
-c2 = Coordinate.new(3,1)
-c3 = Coordinate.new(2,1)
+$gamesPlayed = 0
+$solutions = []
 
-gs = GameState.new(5, Coordinate.new(2,1))
-puts
-puts gs
+def search(gs, moveStack)
+	if (gs.pegsRemaining() == 1)
+		#puts("Found a winning sequence. Final state:")
+		#puts gs
+            
+		$solutions.push moveStack.dup
+            
+		$gamesPlayed += 1
+		
+        return
+	end
+        
+	legalMoves = gs.legalMoves()
+        
+    if legalMoves.empty?
+        $gamesPlayed += 1
+        return
+    end
+        
+	for m in legalMoves
+		nextState = gs.apply(m)
+        moveStack.push(m)
+        search(nextState, moveStack)
+        moveStack.pop()
+	end
+end
 
-m = Move.new(c1, c2, c3)
-gs2 = gs.apply(m)
-puts
-puts gs2
-
-puts "original:"
-puts gs
-
-puts gs.occupiedHoles
+startTime = Time.new()
+gs = GameState.new(5, Coordinate.new(3, 2))
+search(gs, [])
+endTime = Time.new()
+        
+puts "Games played:    %6d\n" % [$gamesPlayed]
+puts "Solutions found: %6d\n" % $solutions.size
+puts "Time elapsed:    %6dms\n" % ((endTime - startTime) * 1000)
