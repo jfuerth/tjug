@@ -37,23 +37,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+/**
+ * This is the test driver for the other classes in this package. It creates an
+ * initial game state and then searches that board's entire state space,
+ * collecting the winning sequences of moves and final board states as it goes.
+ * 
+ * @author fuerth
+ */
 public class SolutionFinder {
 
     private long gamesPlayed;
     private List<List<Move>> solutions = new ArrayList<List<Move>>();
     private long startTime;
     private long endTime;
-    
-    public void run() {
-        startTime = System.nanoTime();
-        GameState gs = new GameState(5, new Coordinate(3, 2));
-        search(gs, new Stack<Move>());
-        endTime = System.nanoTime();
-        
-        System.out.printf("Games played:    %6d%n", gamesPlayed);
-        System.out.printf("Solutions found: %6d%n", solutions.size());
-        System.out.printf("Time elapsed:    %6dms%n", (endTime - startTime) / 1000000);
-    }
     
     private void search(GameState gs, Stack<Move> moveStack) {
         if (gs.pegsRemaining() == 1) {
@@ -80,6 +76,17 @@ public class SolutionFinder {
             search(nextState, moveStack);
             moveStack.pop();
         }
+    }
+
+    public void run() {
+        startTime = System.nanoTime();
+        GameState gs = new GameState(5, new Coordinate(3, 2));
+        search(gs, new Stack<Move>());
+        endTime = System.nanoTime();
+        
+        System.out.printf("Games played:    %6d%n", gamesPlayed);
+        System.out.printf("Solutions found: %6d%n", solutions.size());
+        System.out.printf("Time elapsed:    %6dms%n", (endTime - startTime) / 1000000);
     }
     
     public static void main(String[] args) {
