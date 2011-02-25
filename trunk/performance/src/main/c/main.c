@@ -47,10 +47,12 @@ static struct timeval endTime;
 
 static void search(gamestate_t *gs, alist_t *moveStack) {
 	if (gamestate_pegs_remaining(gs) == 1) {
-//		printf("Found a winning sequence. Final state:\n");
-//		gamestate_print(gs);
+		printf("Found a winning sequence. Final state:\n");
+		gamestate_print(gs);
 		
-		alist_add(solutions, alist_new_copy(moveStack));
+		alist_t *solution = alist_new_copy(moveStack);
+		alist_add(solutions, solution);
+		mem_release(solution);
 		
 		gamesPlayed++;
 		
@@ -61,6 +63,7 @@ static void search(gamestate_t *gs, alist_t *moveStack) {
 	
 	if (alist_is_empty(legalMoves)) {
 		gamesPlayed++;
+		mem_release(legalMoves);
 		return;
 	}
 	
@@ -69,8 +72,12 @@ static void search(gamestate_t *gs, alist_t *moveStack) {
 		gamestate_t *nextState = gamestate_apply_move(gs, m);
 		alist_add(moveStack, m);
 		search(nextState, moveStack);
+		
 		alist_remove_last(moveStack);
+		mem_release(nextState);
 	}
+	
+	mem_release(legalMoves);
 }
 
 static long diff_usec(struct timeval start, struct timeval end) {
@@ -85,17 +92,29 @@ static void run() {
 	
 	gettimeofday(&startTime, NULL);
 	
-	gamestate_t *gs = gamestate_new(5, coord_new(3, 2));
-	search(gs, alist_new());
+	coord_t *emptyHole = coord_new(3, 2);
+	gamestate_t *gs = gamestate_new(5, emptyHole);
+	mem_release(emptyHole);
+	emptyHole = NULL;
+	
+	gamestate_t *moveStack = alist_new();
+	search(gs, moveStack);
+	
+	int solutionCount = solutions->size;
+	
+	mem_release(moveStack);
+	mem_release(solutions);
+	mem_release(gs);
 	
 	gettimeofday(&endTime, NULL);
 	
 	printf("Games played:    %6ld\n", gamesPlayed);
-	printf("Solutions found: %6d\n", solutions->size);
+	printf("Solutions found: %6d\n", solutionCount);
 	printf("Time elapsed:    %6ldms\n", diff_usec(startTime, endTime) / 1000);
 }
 
 int main (int argc, const char * argv[]) {
 	run();
+	mem_summary();
     return 0;
 }

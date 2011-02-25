@@ -47,7 +47,6 @@ typedef struct gamestate {
 } gamestate_t;
 
 gamestate_t *gamestate_new(int rows, coord_t *empty_hole);
-void gamestate_free(gamestate_t *gs);
 
 gamestate_t *gamestate_apply_move(gamestate_t *gs, move_t *move);
 alist_t *gamestate_legal_moves(gamestate_t *gs);

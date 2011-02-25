@@ -32,14 +32,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "memory.h"
 #include "coordinate.h"
 #include "alist.h"
 #include "move.h"
 #include <stdlib.h>
 #include <stdio.h>
 
+static void coord_free(coord_t *c) {
+	// no op
+}
+
 coord_t *coord_new(int row, int hole) {
-	coord_t *c = malloc(sizeof(coord_t));
+	coord_t *c = mem_alloc(sizeof(coord_t), coord_free, "coord");
 	if (c == NULL) {
 		perror("Failed to allocate coordinate");
 		exit(1);
@@ -49,63 +54,79 @@ coord_t *coord_new(int row, int hole) {
 	return c;
 }
 
-void coord_free(coord_t *c) {
-	free(c);
-}
-
 alist_t *coord_possible_moves(coord_t *c, int rowCount) {
 	alist_t *moves = alist_new();
+	
+	move_t *tmp = NULL;
 	
 	// upward (needs at least 2 rows above)
 	if (c->row >= 3) {
 		
 		// up-left
 		if (c->hole >= 3) {
-			alist_add(moves, move_new(
+			alist_add(moves, tmp = move_new(
 							   c,
 							   coord_new(c->row - 1, c->hole - 1),
 							   coord_new(c->row - 2, c->hole - 2)));
+			mem_release(tmp->jumped);
+			mem_release(tmp->to);
+			mem_release(tmp);
 		}
 		
 		// up-right
 		if (c->row - c->hole >= 2) {
-			alist_add(moves, move_new(
+			alist_add(moves, tmp = move_new(
 							   c,
 							   coord_new(c->row - 1, c->hole),
 							   coord_new(c->row - 2, c->hole)));
+			mem_release(tmp->jumped);
+			mem_release(tmp->to);
+			mem_release(tmp);
 		}
 	}
 	
 	// leftward (needs at least 2 pegs to the left)
 	if (c->hole >= 3) {
-		alist_add(moves, move_new(
+		alist_add(moves, tmp = move_new(
 						   c,
 						   coord_new(c->row, c->hole - 1),
 						   coord_new(c->row, c->hole - 2)));
+		mem_release(tmp->jumped);
+		mem_release(tmp->to);
+		mem_release(tmp);
 	}
 	
 	// rightward (needs at least 2 holes to the right)
 	if (c->row - c->hole >= 2) {
-		alist_add(moves, move_new(
+		alist_add(moves, tmp = move_new(
 						   c,
 						   coord_new(c->row, c->hole + 1),
 						   coord_new(c->row, c->hole + 2)));
+		mem_release(tmp->jumped);
+		mem_release(tmp->to);
+		mem_release(tmp);
 	}
 	
 	// downward (needs at least 2 rows below)
 	if (rowCount - c->row >= 2) {
 		
 		// down-left (always possible when there are at least 2 rows below)
-		alist_add(moves, move_new(
+		alist_add(moves, tmp = move_new(
 						   c,
 						   coord_new(c->row + 1, c->hole),
 						   coord_new(c->row + 2, c->hole)));
-		
+		mem_release(tmp->jumped);
+		mem_release(tmp->to);
+		mem_release(tmp);
+
 		// down-right (always possible when there are at least 2 rows below)
-		alist_add(moves, move_new(
+		alist_add(moves, tmp = move_new(
 						   c,
 						   coord_new(c->row + 1, c->hole + 1),
 						   coord_new(c->row + 2, c->hole + 2)));
+		mem_release(tmp->jumped);
+		mem_release(tmp->to);
+		mem_release(tmp);
 	}
 	
 	return moves;

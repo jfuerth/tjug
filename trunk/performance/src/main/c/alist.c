@@ -35,9 +35,19 @@
  */
 
 #include <stdlib.h>
+#include "memory.h"
 #include <stdio.h>
 #include <string.h>
 #include "alist.h"
+
+// releases each list entry, then frees the entries array (which was directly
+// allocated using realloc)
+static void alist_free(alist_t *list) {
+	for (int i = 0; i < list->size; i++) {
+		mem_release(list->entries[i]);
+	}
+	free(list->entries);
+}
 
 static void ensure_capacity(alist_t *list, int capacity) {
 	if (capacity > list->capacity) {
@@ -56,11 +66,7 @@ alist_t *alist_new() {
 }
 
 alist_t *alist_new_sized(int initial_capacity) {
-	alist_t *alist = malloc(sizeof(alist_t));
-	if (alist == NULL) {
-		perror("Failed to allocate arraylist control block");
-		exit(1);
-	}
+	alist_t *alist = mem_alloc(sizeof(alist_t), alist_free, "alist");
 	
 	alist->capacity = 0;
 	alist->size = 0;
@@ -72,31 +78,26 @@ alist_t *alist_new_sized(int initial_capacity) {
 }
 
 alist_t *alist_new_copy(alist_t *src) {
-	alist_t *alist = malloc(sizeof(alist_t));
-	if (alist == NULL) {
-		perror("Failed to allocate arraylist control block");
-		exit(1);
-	}
+	alist_t *alist = mem_alloc(sizeof(alist_t), alist_free, "alist_copy");
 	
 	alist->capacity = 0;
 	alist->size = src->size;
 	alist->entries = NULL;
 	
 	ensure_capacity(alist, src->capacity);
-	memmove(alist->entries, src->entries, sizeof(void *) * src->size);
+	for (int i = 0; i < src->size; i++) {
+		alist->entries[i] = src->entries[i];
+		mem_retain(alist->entries[i]);
+	}
 	
 	return alist;
-}
-
-void alist_free(alist_t *list) {
-	free(list->entries);
-	free(list);
 }
 
 void alist_add(alist_t *list, void *item) {
 	ensure_capacity(list, list->size + 1);
 	list->entries[list->size] = item;
 	list->size = list->size + 1;
+	mem_retain(item);
 }
 
 // 0 1 2 3 4 5 6  -- size == 7
@@ -108,6 +109,8 @@ void alist_remove_at(alist_t *list, int idx) {
 		exit(1);
 	}
 	
+	mem_release(list->entries[idx]);
+	
 	//memmove(list->entries + idx, list->entries + idx + 1, list->size - (idx + 1));
 	for (int i = idx; i < (list->size - 1); i++) {
 		list->entries[i] = list->entries[i + 1];
@@ -116,7 +119,9 @@ void alist_remove_at(alist_t *list, int idx) {
 	list->entries[list->size] = NULL;
 }
 
-/* Returns 1 if item was removed; 0 if item was not found */
+/* Returns 1 if item was removed; 0 if item was not found.
+   If an item is removed, its refcount will be decreased.
+ */
 int alist_remove(alist_t *list, void *item, int (*comparator)(void *, void *)) {
 	int idx = alist_index_of(list, item, comparator);
 	if (idx >= 0) {
@@ -129,6 +134,7 @@ int alist_remove(alist_t *list, void *item, int (*comparator)(void *, void *)) {
 
 void alist_remove_last(alist_t *list) {
 	list->size = list->size - 1;
+	mem_release(list->entries[list->size]);
 	list->entries[list->size] = NULL;
 }
 
