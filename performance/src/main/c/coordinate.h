@@ -45,7 +45,6 @@ typedef struct coord {
 } coord_t;
 
 coord_t *coord_new(int row, int hole);
-void coord_free(coord_t *c);
 
 int coord_cmp(coord_t *lhs, coord_t *rhs);
 

@@ -34,25 +34,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "memory.h"
 #include "move.h"
 #include <stdlib.h>
 #include <stdio.h>
 
-move_t *move_new(coord_t *from, coord_t *jumped, coord_t *to) {
-	move_t *m = malloc(sizeof(move_t));
-	if (m == NULL) {
-		perror("Failed to allocate move");
-		exit(1);
-	}
-	m->from = from;
-	m->jumped = jumped;
-	m->to = to;
-	
-	return m;
+static void move_free(move_t *m) {
+	mem_release(m->from);
+	mem_release(m->jumped);
+	mem_release(m->to);
 }
 
-void move_free(move_t *m) {
-	free(m);
+move_t *move_new(coord_t *from, coord_t *jumped, coord_t *to) {
+	move_t *m = mem_alloc(sizeof(move_t), move_free, "move");
+
+	m->from = from;
+	mem_retain(from);
+	
+	m->jumped = jumped;
+	mem_retain(jumped);
+	
+	m->to = to;
+	mem_retain(to);
+	
+	return m;
 }
 
 int move_cmp(move_t *lhs, move_t *rhs) {

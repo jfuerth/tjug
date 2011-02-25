@@ -49,12 +49,14 @@ typedef struct alist {
 alist_t *alist_new();
 alist_t *alist_new_sized(int initial_capacity);
 alist_t *alist_new_copy(alist_t *src);
-void alist_free(alist_t *list);
 
+// adds an item to this list.
+// item must be a pointer that was allocated by mem_alloc().
 void alist_add(alist_t *list, void *item);
 void alist_remove_at(alist_t *list, int idx);
 
 /* Returns 1 if item was removed; 0 if item was not found */
+// item must be a pointer that was allocated by mem_alloc().
 int alist_remove(alist_t *list, void *item, int (*comparator)(void *, void *));
 
 void alist_remove_last(alist_t *list);

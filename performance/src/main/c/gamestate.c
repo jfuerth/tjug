@@ -34,18 +34,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "memory.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "alist.h"
 #include "gamestate.h"
 #include "coordinate.h"
 
+static void gamestate_free(gamestate_t *gs) {
+	mem_release(gs->occupied_holes);
+}
+
 gamestate_t *gamestate_new(int rows, coord_t *empty_hole) {
-	gamestate_t *gs = malloc(sizeof(gamestate_t));
-	if (gs == NULL) {
-		perror("Couldn't allocate game state");
-		exit(1);
-	}
+	gamestate_t *gs = mem_alloc(sizeof(gamestate_t), gamestate_free, "gamestate");
 	
 	gs->rowcount = rows;
 	gs->occupied_holes = alist_new();
@@ -56,19 +57,15 @@ gamestate_t *gamestate_new(int rows, coord_t *empty_hole) {
 			if (coord_cmp(peg, empty_hole) != 0) {
 				alist_add(gs->occupied_holes, peg);
 			}
+			mem_release(peg);
 		}
 	}
 	
 	return gs;
 }
 
-void gamestate_free(gamestate_t *gs) {
-	alist_free(gs->occupied_holes);
-	free(gs);
-}
-
 gamestate_t *gamestate_apply_move(gamestate_t *gs, move_t *move) {
-	gamestate_t *newgs = malloc(sizeof(gamestate_t));
+	gamestate_t *newgs = mem_alloc(sizeof(gamestate_t), gamestate_free, "gamestate");
 	if (gs == NULL) {
 		perror("Couldn't allocate game state");
 		exit(1);
@@ -118,10 +115,13 @@ alist_t *gamestate_legal_moves(gamestate_t *gs) {
 		alist_t *possibleMoves = coord_possible_moves(c, gs->rowcount);
 		for (int j = 0; j < possibleMoves->size; j++) {
 			move_t *m = alist_get(possibleMoves, j);
-			if (alist_contains(gs->occupied_holes, m->jumped, coord_cmp) && !alist_contains(gs->occupied_holes, m->to, coord_cmp)) {
+			if (alist_contains(gs->occupied_holes, m->jumped, coord_cmp) &&
+				!alist_contains(gs->occupied_holes, m->to, coord_cmp)) {
 				alist_add(legalMoves, m);
 			}
 		}
+		
+		mem_release(possibleMoves);
 	}
 	return legalMoves;
 }
@@ -144,7 +144,7 @@ void gamestate_print(gamestate_t *gs) {
 			} else {
 				printf(" O");
 			}
-			coord_free(this_coord);
+			mem_release(this_coord);
 		}
 		printf("\n");
 	}
