@@ -142,23 +142,16 @@ class GameState:
             self.occupiedHoles = []
             self.occupiedHoles.extend(initialState.occupiedHoles)
 
-            # XXX List.remove() and List.index() raise ValueError if
-            #     requested item is not present. Following code relies
-            #     on this because I couldn't find a better way.
-            
-            # is this really the best/only way to check for existence
-            # of a list item? I'd expect use of exceptions for normal
-            # control of flow to be a no-no...
+            # Note to those comparing this implementation to the others:
+            # List.remove() raises ValueError if thr requested item is
+            # not present, so the explicit errors are not raised here.
+            # The self-checking nature of this method is still intact.
 
             self.occupiedHoles.remove(applyMe.fromh)
             self.occupiedHoles.remove(applyMe.jumped)
 
-            try:
-                self.occupiedHoles.index(applyMe.to)
+            if applyMe.to in self.occupiedHoles:
                 raise RuntimeError, "Move is not consistent with game state: 'to' hole was occupied."
-            except ValueError:
-                # this is the desired case ("to" hole unoccupied)
-                pass
 
             if (applyMe.to.row > self.rowCount or applyMe.to.row < 1):
                 raise RuntimeError, "Move is not legal because the 'to' hole does not exist: " + str(applyMe.to)
@@ -180,19 +173,8 @@ class GameState:
         for c in self.occupiedHoles:
             possibleMoves = c.possibleMoves(self.rowCount);
             for m in possibleMoves:
-                containsJumped = False
-                try:
-                    self.occupiedHoles.index(m.jumped)
-                    containsJumped = True
-                except ValueError:
-                    pass
-
-                containsTo = False
-                try:
-                    self.occupiedHoles.index(m.to)
-                    containsTo = True
-                except ValueError:
-                    pass
+                containsJumped = m.jumped in self.occupiedHoles
+                containsTo = m.to in self.occupiedHoles
 
                 if containsJumped and not containsTo:
                     legalMoves.append(m)
@@ -214,10 +196,9 @@ class GameState:
             for i in range(0, indent):
                 sb.append(" ")
             for hole in range(1, row + 1):
-                try:
-                    self.occupiedHoles.index(Coordinate(row, hole))
+                if Coordinate(row, hole) in self.occupiedHoles:
                     sb.append(" *")
-                except ValueError:
+                else:
                     sb.append(" O")
             sb.append("\n")
         return "".join(sb)
