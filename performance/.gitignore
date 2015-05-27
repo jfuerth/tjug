@@ -1,0 +1,5 @@
+/eclipse_bin/
+*.o
+target/
+src/main/c/performance
+src/main/js/nodejs.js
