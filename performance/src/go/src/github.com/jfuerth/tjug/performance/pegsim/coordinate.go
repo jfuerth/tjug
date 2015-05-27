@@ -1,12 +1,12 @@
 package pegsim
+import "fmt"
 
 type Coordinate struct {
-  hole uint32
-  row uint32
+  hole int
+  row int
 }
 
-func NewCoordinate(row uint32, hole uint32) *Coordinate {
-  c := new(Coordinate)
+func NewCoordinate(row int, hole int) *Coordinate {
   if hole < 1 {
     return nil
   }
@@ -16,16 +16,16 @@ func NewCoordinate(row uint32, hole uint32) *Coordinate {
   return &Coordinate{hole, row} 
 }
 
-func (c *Coordinate) Row() uint32 {
+func (c *Coordinate) Row() int {
   return c.row
 }
 
-func (c *Coordinate) Hole() uint32 {
+func (c *Coordinate) Hole() int {
   return c.hole
 }
 
-func (c *Coordinate) possibleMoves(rowCount uint32) []Move {
-  moves := new([]Move)
+func (c *Coordinate) possibleMoves(rowCount int) []Move {
+  moves := []Move{}
 
   // upward (needs at least 2 rows above)
   if c.row >= 3 {
@@ -95,7 +95,7 @@ func (c *Coordinate) possibleMoves(rowCount uint32) []Move {
 }
 
 func (c *Coordinate) String() string {
-  return "r" + row + "h" + hole;
+  return fmt.Sprint("r", c.row, "h", c.hole);
 }
 
 // don't need to define equals and hashcode; golang does this implicitly for structs

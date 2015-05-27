@@ -2,48 +2,65 @@ package main
 
 import (
   "time"
+  "fmt"
   "github.com/jfuerth/tjug/performance/pegsim"
 )
 
 var gamesPlayed uint64
-var solutions [][]Move
-var startTime Time
-var endTime Time
+var solutions [][]pegsim.Move
+var startTime time.Time
+var endTime time.Time
 
-func search(gs GameState, moveStack []Move) {
+func search(gs *pegsim.GameState, moveStack []pegsim.Move) error {
   if (gs.PegsRemaining() == 1) {
-    moveStackCopy := make([]Move, len(moveStack))
+    moveStackCopy := make([]pegsim.Move, len(moveStack))
     copy(moveStackCopy, moveStack)
     solutions = append(solutions, moveStackCopy)
 
     gamesPlayed++
 
-    return
+    return nil
   }
 
-  legalMoves := gs.legalMoves()
+  legalMoves := gs.LegalMoves()
 
   if (len(legalMoves) == 0) {
     gamesPlayed++
-    return
+    return nil
   }
 
-  for _,m := range legalMoves {
-    nextState := gs.apply(m)
+  for _, m := range legalMoves {
+    nextState, err := gs.Apply(m)
+    if err != nil {
+      return err
+    }
     moveStack = append(moveStack, m)
-    search(nextState, moveStack)
-    moveStack = moveStack[:len(moveStack - 1)]
+
+    err = search(nextState, moveStack)
+    if err != nil {
+      return err
+    }
+
+    moveStack = moveStack[:len(moveStack) - 1]
   }
+
+  return nil
 }
 
 func main() {
   startTime = time.Now()
-  gs := GameState.new(5, Coordinate.new(3, 2))
-  search(gs, []Move)
+  gs := pegsim.NewGameState(5, pegsim.NewCoordinate(3, 2))
+
+  err := search(gs, make([]pegsim.Move, 0))
+  if err != nil {
+    fmt.Println("Program error: ", err)
+    return
+  }
+
   endTime = time.Now()
 
   fmt.Printf("Games Played:    %6d\n", gamesPlayed)
-  fmt.Printf("Solutions Found: %6d\n", solutions.size())
-  fmt.Printf("Time Elapsed:    %6dms\n", (endTime - startTime) / 10000000)
+  fmt.Printf("Solutions Found: %6d\n", len(solutions))
+  fmt.Printf("Time Elapsed:    %6dms\n", (endTime.Sub(startTime)))
 }
 

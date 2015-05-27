@@ -2,85 +2,91 @@ package pegsim
 
 import (
   "errors"
+  "bytes"
+  "fmt"
+  "runtime/debug"
 )
 
 type GameState struct {
-  rowCount uint32
+  rowCount int
   occupiedHoles []Coordinate
 }
 
-func NewGameState(rows uint32, emptyHole *Coordinate) *GameState {
-  occupiedHoles := new([]Coordinate)
-  for row := uint32(1); row <= rows; row++ {
-    for hole := uint32(1); hole <= row; hole++ {
+func NewGameState(rows int, emptyHole *Coordinate) *GameState {
+  occupiedHoles := []Coordinate{}
+  for row := 1; row <= rows; row++ {
+    for hole := 1; hole <= row; hole++ {
       peg := NewCoordinate(row, hole)
       if *peg != *emptyHole {
-        occupiedHoles := append(*occupiedHoles, *peg)
+        occupiedHoles = append(occupiedHoles, *peg)
       }
     }
   }
-  return &GameState(rows, *occupiedHoles)
+  return &GameState{rows, occupiedHoles}
 }
 
-func (initialState *GameState) newGameStateWithAppliedMove(applyMe Move) *GameState {
+func (initialState *GameState) newGameStateWithAppliedMove(applyMe Move) (*GameState, error) {
   occupiedHoles := make([]Coordinate, len(initialState.occupiedHoles))
   copy(occupiedHoles, initialState.occupiedHoles)
 
-  occupiedHoles, err := remove(occupiedHoles, applyMe.from())
-  if err != Nil {
-    return Nil, error("Move is not consistent with game state: 'from' hole was unoccupied.")
+  occupiedHoles, err := remove(occupiedHoles, applyMe.From())
+  if err != nil {
+    debug.PrintStack()
+    return nil, errors.New("Move is not consistent with game state: 'from' hole was unoccupied.")
   }
 
-  occupiedHoles, err = remove(occupiedHoles, applyMe.jumped())
-  if err != Nil {
-    return Nil, error("Move is not consistent with game state: jumped hole was unoccupied.")
+  occupiedHoles, err = remove(occupiedHoles, applyMe.Jumped())
+  if err != nil {
+    debug.PrintStack()
+    return nil, errors.New("Move is not consistent with game state: jumped hole was unoccupied.")
   }
 
-  occupiedHoles, err = remove(occupiedHoles, applyMe.to())
-  if err != Nil {
-    return Nil, error("Move is not consistent with game state: 'to' hole was occupied.")
+  if contains(occupiedHoles, *applyMe.To()) {
+    debug.PrintStack()
+    fmt.Println("error when applying", applyMe, "to", initialState)
+    return nil, errors.New("Move is not consistent with game state: 'to' hole was occupied.")
   }
 
-  if applyMe.to().row() > rowCount || applyMe.to().row() < 1 {
-    error("Move is not legal because the 'to' hole does not exist: " + applyMe.getTo());
+  if applyMe.To().Row() > initialState.rowCount || applyMe.To().Row() < 1 {
+    errors.New(fmt.Sprintf("Move is not legal because the 'to' hole does not exist: %s", applyMe.To()));
   }
 
-  occupiedHoles = append(occupiedHoles, applyMe.to())
+  occupiedHoles = append(occupiedHoles, *applyMe.To())
 
-  newGs := &GameState(initialState.rowCount, occupiedHoles)
+  return &GameState{initialState.rowCount, occupiedHoles}, nil
 }
 
 func (gs *GameState) LegalMoves() []Move {
-  legalMoves := new([]Move)
+  legalMoves := make([]Move, 0)
   for _, c := range gs.occupiedHoles {
     possibleMoves := c.possibleMoves(gs.rowCount)
     for _, m := range possibleMoves {
-      if contains(occupiedHoles, m.Jumped()) && contains(occupiedHoles, m.To()) {
-        legalMoves := append(legalMoves, m)
+      if contains(gs.occupiedHoles, *m.Jumped()) && !contains(gs.occupiedHoles, *m.To()) {
+        legalMoves = append(legalMoves, m)
       }
     }
   }
   return legalMoves
 }
 
-func (gs GameState) Apply(move Move) {
+func (gs GameState) Apply(move Move) (*GameState, error) {
   return gs.newGameStateWithAppliedMove(move)
 }
 
-func (gs GameState) PegsRemaining() {
-  return gs.occupiedHoles.Size()
+func (gs GameState) PegsRemaining() int {
+  return len(gs.occupiedHoles)
 }
 
-func (gs GameState) String() {
-  sb := bytes.Buffer
+func (gs GameState) String() string {
+  sb := bytes.Buffer{}
   sb.WriteString(fmt.Sprintf("Game with %d pegs:\n", gs.PegsRemaining()))
-  for row := 1; row <= rowCount; row++ {
-    indent := rowCount - row
+  for row := 1; row <= gs.rowCount; row++ {
+    indent := gs.rowCount - row
     for i := 0; i < indent; i++ {
       sb.WriteString(" ")
     }
     for hole := 1; hole <= row; hole++ {
-      if contains(gs.occupiedHoles, Coordinate.NewCoordinate(row, hole)) {
+      if contains(gs.occupiedHoles, *NewCoordinate(row, hole)) {
         sb.WriteString(" *")
       } else {
         sb.WriteString(" O")
@@ -95,16 +101,16 @@ func contains(s []Coordinate, v Coordinate) bool {
   return index(s, v) >= 0
 }
 
-func remove(coords []Coordinate, toRemove Coordinate) ([]Coordinate, error) {
-  idx := index(coords, toRemove)
+func remove(coords []Coordinate, toRemove *Coordinate) ([]Coordinate, error) {
+  idx := index(coords, *toRemove)
   if idx >= 0 {
-    return append(coords[:idx], coords[idx + 1:len(coords)]), Nil
+    return append(coords[:idx], coords[idx + 1:len(coords)]...), nil
   } else {
     return coords, errors.New("item to remove not found")
   }
 }
 
-func index(s []Coordinate, v Coordinate) int32 {
+func index(s []Coordinate, v Coordinate) int {
   for i, vv := range s {
     if v == vv {
       return i
