@@ -2,13 +2,13 @@
  * Created on Jan 3, 2010
  *
  * Copyright (c) 2010, Jonathan Fuerth
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -18,7 +18,7 @@
  *     * Neither the name of Jonathan Fuerth nor the names of other
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -61,7 +61,7 @@ public class CoordinateTest {
                 });
         assertCollectionsEqual(expected, c.possibleMoves(5));
     }
-    
+
     @Test
     public void testPossibleMovesRow1TooShort() throws Exception {
         Coordinate c = new Coordinate(1, 1);
@@ -84,7 +84,7 @@ public class CoordinateTest {
                 });
         assertCollectionsEqual(expected, c.possibleMoves(5));
     }
-    
+
     @Test
     public void testPossibleMovesBottomRight() throws Exception {
         Coordinate c = new Coordinate(5, 5);
@@ -101,7 +101,7 @@ public class CoordinateTest {
                 });
         assertCollectionsEqual(expected, c.possibleMoves(5));
     }
-    
+
     @Test
     public void testPossibleMovesBottomMiddle() throws Exception {
         Coordinate c = new Coordinate(5, 3);
@@ -126,7 +126,7 @@ public class CoordinateTest {
                 });
         assertCollectionsEqual(expected, c.possibleMoves(5));
     }
-    
+
     @Test
     public void testPossibleMovesRightMiddle() throws Exception {
         Coordinate c = new Coordinate(3, 3);
@@ -177,7 +177,7 @@ public class CoordinateTest {
      * size and then by set equality, so collections A, A, B and A, B, B would
      * be considered equal. This limitation is not a grave risk when testing
      * lists of possible moves.
-     * 
+     *
      * @param expected
      * @param actual
      */
