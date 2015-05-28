@@ -3,7 +3,7 @@ package main
 import (
   "time"
   "fmt"
-  "github.com/jfuerth/tjug/performance/pegsim"
+  "pegsim"
 )
 
 var gamesPlayed uint64
@@ -61,6 +61,6 @@ func main() {
 
   fmt.Printf("Games Played:    %6d\n", gamesPlayed)
   fmt.Printf("Solutions Found: %6d\n", len(solutions))
-  fmt.Printf("Time Elapsed:    %6dms\n", (endTime.Sub(startTime)))
+  fmt.Printf("Time Elapsed:    %6dms\n", (endTime.Sub(startTime).Nanoseconds() / 1000000))
 }
 
