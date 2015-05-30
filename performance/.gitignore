@@ -3,3 +3,4 @@
 target/
 src/main/c/performance
 src/main/js/nodejs.js
+*.iml
