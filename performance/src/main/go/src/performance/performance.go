@@ -7,13 +7,13 @@ import (
 )
 
 var gamesPlayed uint64
-var solutions [][]pegsim.Move
+var solutions [][]*pegsim.Move
 var startTime time.Time
 var endTime time.Time
 
-func search(gs *pegsim.GameState, moveStack []pegsim.Move) error {
+func search(gs *pegsim.GameState, moveStack []*pegsim.Move) error {
   if (gs.PegsRemaining() == 1) {
-    moveStackCopy := make([]pegsim.Move, len(moveStack))
+    moveStackCopy := make([]*pegsim.Move, len(moveStack))
     copy(moveStackCopy, moveStack)
     solutions = append(solutions, moveStackCopy)
 
@@ -51,7 +51,7 @@ func main() {
   startTime = time.Now()
   gs := pegsim.NewGameState(5, pegsim.NewCoordinate(3, 2))
 
-  err := search(gs, make([]pegsim.Move, 0))
+  err := search(gs, make([]*pegsim.Move, 0))
   if err != nil {
     fmt.Println("Program error: ", err)
     return

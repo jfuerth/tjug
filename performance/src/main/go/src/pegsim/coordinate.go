@@ -24,8 +24,8 @@ func (c *Coordinate) Hole() int {
   return c.hole
 }
 
-func (c *Coordinate) possibleMoves(rowCount int) []Move {
-  moves := []Move{}
+func (c *Coordinate) possibleMoves(rowCount int) []*Move {
+  moves := []*Move{}
 
   // upward (needs at least 2 rows above)
   if c.row >= 3 {

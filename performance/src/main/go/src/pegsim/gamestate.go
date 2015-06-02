@@ -25,7 +25,7 @@ func NewGameState(rows int, emptyHole *Coordinate) *GameState {
   return &GameState{rows, occupiedHoles}
 }
 
-func (initialState *GameState) newGameStateWithAppliedMove(applyMe Move) (*GameState, error) {
+func (initialState *GameState) newGameStateWithAppliedMove(applyMe *Move) (*GameState, error) {
   occupiedHoles := make([]Coordinate, len(initialState.occupiedHoles))
   copy(occupiedHoles, initialState.occupiedHoles)
 
@@ -56,8 +56,8 @@ func (initialState *GameState) newGameStateWithAppliedMove(applyMe Move) (*GameS
   return &GameState{initialState.rowCount, occupiedHoles}, nil
 }
 
-func (gs *GameState) LegalMoves() []Move {
-  legalMoves := make([]Move, 0)
+func (gs *GameState) LegalMoves() []*Move {
+  legalMoves := make([]*Move, 0)
   for _, c := range gs.occupiedHoles {
     possibleMoves := c.possibleMoves(gs.rowCount)
     for _, m := range possibleMoves {
@@ -69,15 +69,15 @@ func (gs *GameState) LegalMoves() []Move {
   return legalMoves
 }
 
-func (gs GameState) Apply(move Move) (*GameState, error) {
+func (gs *GameState) Apply(move *Move) (*GameState, error) {
   return gs.newGameStateWithAppliedMove(move)
 }
 
-func (gs GameState) PegsRemaining() int {
+func (gs *GameState) PegsRemaining() int {
   return len(gs.occupiedHoles)
 }
 
-func (gs GameState) String() string {
+func (gs *GameState) String() string {
   sb := bytes.Buffer{}
   sb.WriteString(fmt.Sprintf("Game with %d pegs:\n", gs.PegsRemaining()))
   for row := 1; row <= gs.rowCount; row++ {
