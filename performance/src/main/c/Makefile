@@ -18,3 +18,6 @@ performance-pgo: cooked.profdata
 
 clean:
 	rm -f *.o performance performance-* *.profraw *.profdata
+
+version:
+	$(CC) --version
