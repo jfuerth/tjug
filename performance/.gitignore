@@ -6,3 +6,4 @@ src/main/js/nodejs.js
 *.iml
 *.exe
 .DS_Store
+.idea/
