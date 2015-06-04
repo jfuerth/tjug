@@ -43,15 +43,18 @@
 
 typedef struct gamestate {
 	int rowcount;
-	alist_t *occupied_holes;
+	coord_t occupied_holes[HOLES_IN_BOARD];
 } gamestate_t;
 
-gamestate_t *gamestate_new(int rows, coord_t *empty_hole);
-void gamestate_free(gamestate_t *gs);
+gamestate_t gamestate_new(int rows, coord_t empty_hole);
 
-gamestate_t *gamestate_apply_move(gamestate_t *gs, move_t *move);
-alist_t *gamestate_legal_moves(gamestate_t *gs);
-int gamestate_pegs_remaining(gamestate_t *gs);
-void gamestate_print(gamestate_t *gs);
+gamestate_t gamestate_apply_move(gamestate_t gs, move_t move);
+
+// writes all legal moves from this gamestate into target, which must
+// have enough room to fit them all. Returns the number of moves written.
+int gamestate_legal_moves(gamestate_t gs, move_t[] target, int target_size);
+
+int gamestate_pegs_remaining(gamestate_t gs);
+void gamestate_print(gamestate_t gs);
 
 #endif
